@@ -73,16 +73,17 @@ function veaf.logTrace(message)
 end
 
 function veaf.vecToString(vec)
-    local result = ""
+    local result = "{"
     if vec.x then
         result = result .. string.format(" x=%.1f", vec.x)
     end
     if vec.y then
-        result = result .. string.format(" y=%.1f", vec.y)
+        result = result .. string.format(", y=%.1f", vec.y)
     end
     if vec.z then
-        result = result .. string.format(" z=%.1f", vec.z)
+        result = result .. string.format(", z=%.1f", vec.z)
     end
+    result = result .. "}"
     return result
 end
 

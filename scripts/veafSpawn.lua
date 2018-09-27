@@ -65,7 +65,7 @@ veafSpawn = {}
 veafSpawn.Id = "SPAWN - "
 
 --- Version.
-veafSpawn.Version = "1.1.3"
+veafSpawn.Version = "1.2.0"
 
 --- Key phrase to look for in the mark text which triggers the weather report.
 veafSpawn.Keyphrase = "veaf spawn "
@@ -78,6 +78,9 @@ veafSpawn.IlluminationFlareAglAltitude = 1000
 
 veafSpawn.RadioMenuName = "SPAWN (" .. veafSpawn.Version .. ")"
 
+--- All the air unit templates groups must comply with this name
+veafSpawn.AirUnitTemplateGroupNamePattern = "^TEMPLATE_AIRUNIT_(.*)$"
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Do not change anything below unless you know what you are doing!
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -86,6 +89,8 @@ veafSpawn.rootPath = nil
 
 -- counts the units generated 
 veafSpawn.spawnedUnitsCounter = 0
+
+veafSpawn.AirUnitTemplates = {}
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Utility methods
@@ -119,6 +124,10 @@ function veafSpawn.onEventMarkChange(eventPos, event)
             -- Check options commands
             if options.unit then
                 veafSpawn.spawnUnit(eventPos, options.name, options.country, options.speed, options.altitude, options.heading)
+            elseif options.airunit then
+                veafSpawn.spawnAirUnit(eventPos, options.name, options.copyof, options.country, options.speed, options.altitude, options.heading)
+            elseif options.farp then
+                veafSpawn.spawnFarp(eventPos, options.name, options.country, options.heading)
             elseif options.group then
                 veafSpawn.spawnGroup(eventPos, options.name, options.country, options.speed, options.altitude, options.heading, options.spacing)
             elseif options.cargo then
@@ -126,7 +135,7 @@ function veafSpawn.onEventMarkChange(eventPos, event)
             elseif options.smoke then
                 veafSpawn.spawnSmoke(eventPos, options.smokeColor)
             elseif options.flare then
-                veafSpawn.spawnIlluminationFlare(eventPos, options.alt)
+                veafSpawn.spawnIlluminationFlare(eventPos, options.altitude)
             end
         else
             -- None of the keywords matched.
@@ -149,20 +158,23 @@ function veafSpawn.markTextAnalysis(text)
     -- Option parameters extracted from the mark text.
     local switch = {}
     switch.unit = false
+    switch.airunit = false
     switch.group = false
     switch.cargo = false
     switch.smoke = false
     switch.flare = false
+    switch.farp = false
 
     -- spawned group/unit name
     switch.name = ""
+    switch.copyof = nil
 
     -- spawned group units spacing
     switch.spacing = 5
     
-    switch.country = "RUSSIA"
+    switch.country = nil
     switch.speed = 0
-    switch.altitude = 0
+    switch.altitude = nil
     switch.heading = 0
     
     -- smoke color
@@ -174,12 +186,11 @@ function veafSpawn.markTextAnalysis(text)
     -- cargo type
     switch.cargoType = "uh1h_cargo"
 
-    -- flare agl altitude (meters)
-    switch.alt = veafSpawn.IlluminationFlareAglAltitude
-
     -- Check for correct keywords.
     if text:lower():find(veafSpawn.Keyphrase .. "unit") then
         switch.unit = true
+    elseif text:lower():find(veafSpawn.Keyphrase .. "airunit") then
+            switch.airunit = true
     elseif text:lower():find(veafSpawn.Keyphrase .. "group") then
         switch.group = true
     elseif text:lower():find(veafSpawn.Keyphrase .. "smoke") then
@@ -188,6 +199,8 @@ function veafSpawn.markTextAnalysis(text)
         switch.flare = true
     elseif text:lower():find(veafSpawn.Keyphrase .. "cargo") then
         switch.cargo = true
+    elseif text:lower():find(veafSpawn.Keyphrase .. "farp") then
+        switch.farp = true
     else
         return nil
     end
@@ -201,10 +214,16 @@ function veafSpawn.markTextAnalysis(text)
         local key = str[1]
         local val = str[2]
 
-        if (switch.group or switch.unit) and key:lower() == "name" then
+        if key:lower() == "name" then
             -- Set name.
             veafSpawn.logDebug(string.format("Keyword name = %s", val))
             switch.name = val
+        end
+
+        if key:lower() == "copyof" then
+            -- Set name.
+            veafSpawn.logDebug(string.format("Keyword copyof = %s", val))
+            switch.copyof = val
         end
 
         if switch.group and key:lower() == "spacing" then
@@ -214,28 +233,28 @@ function veafSpawn.markTextAnalysis(text)
             switch.spacing = nVal
         end
         
-        if (switch.group or switch.unit) and key:lower() == "alt" then
+        if key:lower() == "alt" then
             -- Set altitude.
             veafSpawn.logDebug(string.format("Keyword alt = %d", val))
             local nVal = tonumber(val)
             switch.altitude = nVal
         end
         
-        if (switch.group or switch.unit) and key:lower() == "speed" then
+        if key:lower() == "speed" then
             -- Set altitude.
             veafSpawn.logDebug(string.format("Keyword speed = %d", val))
             local nVal = tonumber(val)
             switch.speed = nVal
         end
         
-        if (switch.group or switch.unit) and key:lower() == "hdg" then
+        if key:lower() == "hdg" then
             -- Set altitude.
             veafSpawn.logDebug(string.format("Keyword hdg = %d", val))
             local nVal = tonumber(val)
             switch.heading = nVal
         end
         
-        if (switch.group or switch.unit) and key:lower() == "country" then
+        if key:lower() == "country" then
             -- Set country
             veafSpawn.logDebug(string.format("Keyword country = %s", val))
             switch.country = val:upper()
@@ -255,13 +274,6 @@ function veafSpawn.markTextAnalysis(text)
             elseif (val:lower() == "white") then 
                 switch.smokeColor = trigger.smokeColor.White
             end
-        end
-
-        if switch.flare and key:lower() == "alt" then
-            -- Set size.
-            veafSpawn.logDebug(string.format("Keyword alt = %d", val))
-            local nVal = tonumber(val)
-            switch.alt = nVal
         end
 
         if switch.cargo and key:lower() == "name" then
@@ -300,6 +312,28 @@ function veafSpawn.markTextAnalysis(text)
     -- check mandatory parameter "name" for command "unit"
     if switch.unit and not(switch.name) then return nil end
     
+    if not(switch.altitude) then
+        if switch.flare then
+            switch.altitude = veafSpawn.IlluminationFlareAglAltitude
+        else
+            switch.altitude = 0
+        end
+    end
+
+    if not(switch.country) then
+        if switch.farp then
+            switch.country = "USA"
+        else
+            switch.country = "RUSSIA"
+        end
+    end
+
+    if switch.farp then
+        if not switch.name then
+            switch.name = "FARP"
+        end
+    end
+
     return switch
 end
 
@@ -376,6 +410,45 @@ function veafSpawn.spawnGroup(spawnSpot, name, country, speed, alt, hdg, spacing
 
     -- message the group spawning
     trigger.action.outText("A " .. group.description .. "("..country..") has been spawned", 5)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Air unit spawn command
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Spawn a specific air unit at a specific spot
+function veafSpawn.spawnAirUnit(spawnPosition, name, copyof, country, speed, altitude, heading)
+    veafSpawn.logDebug(string.format("spawnAirUnit(name = %s, country=%s)",name, country))
+    veafSpawn.logDebug("spawnAirUnit: spawnPosition = ".. veaf.vecToString(spawnPosition))
+    
+    if not(copyof) then
+        local soughtTypeAndCountry = name:upper()
+        if country then 
+            soughtTypeAndCountry = soughtTypeAndCountry .. "_" .. country:upper()
+        end
+
+        -- find a template in the templates List
+        for typeAndCountry, groupName in pairs(veafSpawn.AirUnitTemplates) do
+            if typeAndCountry:find(soughtTypeAndCountry) then
+                copyof = groupName
+                veafSpawn.logTrace("spawnAirUnit: found copyof="..copyof)
+                break
+            end
+        end
+    end
+    
+    -- clone the original group
+    local newGroup = mist.teleportToPoint({
+        groupName = copyof,
+        point = spawnPosition,
+        action = "clone"
+    })
+
+    -- make the new group move
+    mist.groupRandomDistSelf(newGroup.name, 6000, 'cone')
+
+    -- message the unit spawning
+    trigger.action.outText("A " .. name .. "("..country..") has been spawned", 5)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -457,6 +530,26 @@ function veafSpawn.spawnUnit(spawnPosition, name, country, speed, alt, hdg)
 
     -- message the unit spawning
     trigger.action.outText("A " .. unit.displayName .. "("..country..") has been spawned", 5)
+end
+
+--- Spawn a farp at a specific spot
+function veafSpawn.spawnFarp(spawnPosition, name, country, hdg)
+    veafSpawn.logDebug(string.format("spawnFarp(name=%s, country=%s, hdg= %d)", name, country, hdg))
+    veafSpawn.logDebug("spawnFarp: spawnPosition ".. veaf.vecToString(spawnPosition))
+    
+    veafSpawn.spawnedUnitsCounter = veafSpawn.spawnedUnitsCounter + 1
+
+    local copyof = "TEMPLATE_FARP"
+
+    -- create the farp
+    local newGroupName = mist.teleportToPoint({
+        groupName = copyof,
+        point = spawnPosition,
+        action = "clone"
+    })
+
+    -- message the unit spawning
+    trigger.action.outText("A farp named ".. name .. " ("..country..") has been spawned", 5)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -628,9 +721,22 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- initialisation
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
+function veafSpawn.loadAirUnitTemplates()
+    veafSpawn.logDebug("loadAirUnitTemplates()")
+    for _, g in pairs(mist.DBs.groupsByName) do
+        local name = g.groupName
+        if name:match(veafSpawn.AirUnitTemplateGroupNamePattern) then
+            veafSpawn.logDebug("loadAirUnitTemplates name=" .. name)
+            local typeAndCountry = name:match(veafSpawn.AirUnitTemplateGroupNamePattern)
+            veafSpawn.logTrace("loadAirUnitTemplates typeAndCountry=" .. typeAndCountry ..")")
+            veafSpawn.AirUnitTemplates[typeAndCountry:upper()] = name
+        end
+    end
+end
 
 function veafSpawn.initialize()
     veafSpawn.buildRadioMenu()
+    veafSpawn.loadAirUnitTemplates()
     veafMarkers.registerEventHandler(veafMarkers.MarkerChange, veafSpawn.onEventMarkChange)
 end
 
