@@ -553,9 +553,8 @@ function veafSpawn.spawnUnit(spawnPosition, name, country, speed, alt, hdg, unit
     
     -- JTAC needs to be invisible and immortal
     if role == "jtac" then
-      -- @todo later - need to refactor JTACAutoLase library
-      -- require lib DCS-JTACAutoLaze
-      --JTACAutoLase(groupName, laserCode, false, "all")
+      -- require lib DCS-JTACAutoLase
+      JTACAutoLase(groupName, laserCode, false, "all")
     end
 
     if speed > 0 then
