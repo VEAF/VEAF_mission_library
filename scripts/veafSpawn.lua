@@ -741,7 +741,7 @@ function veafSpawn.buildRadioMenu()
     missionCommands.addCommand("HELP", veafSpawn.rootPath, veafSpawn.help)
     missionCommands.addCommand("HELP - all units", veafSpawn.rootPath, veafSpawn.helpAllUnits)
     missionCommands.addCommand("HELP - all groups", veafSpawn.rootPath, veafSpawn.helpAllGroups)
-    missionCommands.addCommand("HELP - all cargoes", veafSpawn.rootPath, veafSpawn.helpAllCargoes)
+    --missionCommands.addCommand("HELP - all cargoes", veafSpawn.rootPath, veafSpawn.helpAllCargoes)
 end
 
 function veafSpawn.help()
