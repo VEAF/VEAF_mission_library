@@ -53,13 +53,15 @@ veafRadio.RadioMenuName = "VEAF (" .. veaf.Version .. " - radio " .. veafRadio.V
 -- Do not change anything below unless you know what you are doing!
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-veafRadio.rootPath = nil
-
 --- Humans Groups (associative array groupId => group)
 veafRadio.humanGroups = {}
 
 --- This structure contains all the radio menus
 veafRadio.radioMenu = {}
+veafRadio.radioMenu.title = veafRadio.RadioMenuName
+veafRadio.radioMenu.dcsRadioMenu = nil
+veafRadio.radioMenu.subMenus = {}
+veafRadio.radioMenu.commands = {}
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Utility methods
@@ -81,27 +83,115 @@ end
 -- Radio menu methods
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Build the initial radio menu
-function veafRadio.buildRadioMenu()
-    local rootMenuPath = veafRadio.addSubMenu(veaf.RadioMenuName, nil)
-    veafRadio.addCommand('Visit us at http://www.veaf.org', rootMenuPath, veaf.emptyFunction)
-end
-
 --- Refresh the radio menu, based on stored information
 --- This is called from another method that has first changed the radio menu information by adding or removing elements
 function veafRadio.refreshRadioMenu()
-    --veafRadio.radioMenuPath = missionCommands.addSubMenu(veaf.RadioMenuName)
+  -- completely delete the dcs radio menu
+  missionCommands.removeItem({veafRadio.radioMenu.dcsRadioMenu})
+  
+  -- create all the commands and submenus in the dcs radio menu
+  veafRadio.refreshRadioSubmenu(nil, veafRadio.radioMenu)        
 end
 
-function veafRadio.addCommand(title, radioMenuPath, method)
-    --missionCommands.addCommand('Skip current objective', veafCasMission.rootPath, veafCasMission.skipCasTarget)
+function veafRadio.refreshRadioSubmenu(parentRadioMenu, radioMenu)
+  -- create the radio menu in DCS
+  if parentRadioMenu then
+    radioMenu.dcsRadioMenu = missionCommands.addSubMenu(radioMenu.title, parentRadioMenu.dcsRadioMenu)
+  else
+    radioMenu.dcsRadioMenu = missionCommands.addSubMenu(radioMenu.title)
+  end
+  
+  -- create the commands in the radio menu
+  for count = 1,#radioMenu.commands do
+    local command = radioMenu.commands[count]
+    if command.isForGroup then
+      -- build menu for each player
+      for groupId, group in pairs(veafRadio.humanGroups) do
+          -- add radio command by player group
+          missionCommands.addCommandForGroup(groupId, command.title, radioMenu.dcsRadioMenu, radioMenu.method, groupId)
+      end
+    else
+      missionCommands.addCommand(command.title, radioMenu.dcsRadioMenu, radioMenu.method)
+    end
+  end
+  
+  -- recurse to create the submenus in the radio menu
+  for count = 1,#radioMenu.subMenus do
+    local subMenu = radioMenu.subMenus[count]
+    veafRadio.refreshRadioSubmenu(radioMenu, subMenu)
+  end
 end
 
-function veafRadio.addSubMenu(title, radioMenuPath)
-    local subMenu = {}
-    subMenu.Title = title
+function veafRadio.addCommandToMainMenu(title, method)
+  return veafRadio.addCommandToSubmenu(title, nil, method)
+end
+  
+function veafRadio.addCommandToSubmenu(title, radioMenu, method, isForGroup)
+    local command = {}
+    command.title = title
+    command.method = method
+    command.isForGroup = isForGroup
+    local menu = veafRadio.radioMenu
+    if radioMenu then
+       menu = radioMenu 
+    end
     
-    --veafCasMission.targetMarkersPath = missionCommands.addSubMenu("Target markers", veafCasMission.rootPath)
+    -- add command to menu
+    table.insert(menu.commands, command)
+    
+    return command
+end
+
+function veafRadio.delCommand(radioMenu, title)
+  for count = 1,#radioMenu.commands do
+    local command = radioMenu.commands[count]
+    if command.title == title then
+      table.remove(radioMenu.commands, count)
+      return true
+    end
+  end
+  
+  return false
+end
+
+function veafRadio.addMenu(title)
+  return veafRadio.addSubMenu(title, nil)
+end
+
+function veafRadio.addSubMenu(title, radioMenu)
+    local subMenu = {}
+    subMenu.title = title
+    subMenu.dcsRadioMenu = nil
+    subMenu.subMenus = {}
+    subMenu.commands = {}
+    
+    local menu = veafRadio.radioMenu
+    if radioMenu then
+       menu = radioMenu 
+    end
+    
+    -- add subMenu to menu
+    table.insert(menu.subMenus, subMenu)
+    
+    return subMenu
+end
+
+function veafRadio.delSubmenu(parentMenu, subMenu)
+  for count = 1,#parentMenu.subMenus do
+    local menu = parentMenu.subMenus[count]
+    local found = false
+    if type(subMenu) == "string" then
+      found = menu.title == subMenu
+    else
+      found = menu == subMenu
+    end
+    if found then
+      table.remove(parentMenu.subMenus, count)
+      return true
+    end
+  end
+  
+  return false
 end
 
 -- prepare humans groups
@@ -124,8 +214,9 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function veafRadio.initialize()
+    -- Build the initial radio menu
+    veafRadio.addCommandToMainMenu('Visit us at http://www.veaf.org', veafRadio.radioMenu, veaf.emptyFunction)
     veafRadio.buildHumanGroups()
-    veafRadio.buildRadioMenu()
     veafRadio.refreshRadioMenu()
 end
 

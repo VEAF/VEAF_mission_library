@@ -275,28 +275,27 @@ function veafCarrierOperations.rebuildRadioMenu()
         -- remove the start menu
         if carrier.startMenuName then
             veafCarrierOperations.logTrace("remove carrier.startMenuName="..carrier.startMenuName)
-            missionCommands.removeItem({veaf.RadioMenuName, veafCarrierOperations.RadioMenuName, carrier.startMenuName})
+            veafRadio.delCommand((veafCarrierOperations.rootPath, carrier.startMenuName)
         end
 
         -- remove the stop menu
         if carrier.stopMenuName then
             veafCarrierOperations.logTrace("remove carrier.stopMenuName="..carrier.stopMenuName)
-            missionCommands.removeItem({veaf.RadioMenuName, veafCarrierOperations.RadioMenuName, carrier.stopMenuName})
+            veafRadio.delCommand((veafCarrierOperations.rootPath, carrier.stopMenuName)
         end
 
         -- remove the ATC menu (by player group)
         if carrier.getInfoMenuName then
             veafCarrierOperations.logTrace("remove carrier.getInfoMenuName="..carrier.getInfoMenuName)
-            for groupId, group in pairs(veafCarrierOperations.humanGroups) do
-                missionCommands.removeItemForGroup(groupId, {veaf.RadioMenuName, veafCarrierOperations.RadioMenuName, carrier.getInfoMenuName})
-            end
+            veafRadio.delCommand((veafCarrierOperations.rootPath, carrier.getInfoMenuName)
         end
 
         if carrier.conductingAirOperations then
             -- add the stop menu
             carrier.stopMenuName = name .. " - End air operations"
             veafCarrierOperations.logTrace("add carrier.stopMenuName="..carrier.stopMenuName)
-            missionCommands.addCommand(carrier.stopMenuName, veafCarrierOperations.rootPath, veafCarrierOperations.stopCarrierOperations, name)
+            veafRadio.addCommandToSubmenu(title,radioMenu,method,isForGroup)
+            -- MARKER TODO DPI KILROY WAS HERE
         else
             -- add the start menu
             carrier.startMenuName = name .. " - Start carrier air operations"
@@ -318,12 +317,10 @@ end
 function veafCarrierOperations.buildRadioMenu()
     veafCarrierOperations.logDebug("veafCarrierOperations.buildRadioMenu")
 
-    veafCarrierOperations.rootPath = missionCommands.addSubMenu(veafCarrierOperations.RadioMenuName, veaf.radioMenuPath)
+    veafCarrierOperations.rootPath = veafRadio.addMenu(veafCarrierOperations.RadioMenuName)
 
     -- build HELP menu for each group
-    for groupId, group in pairs(veafCarrierOperations.humanGroups) do
-        missionCommands.addCommandForGroup(groupId, "HELP", veafCarrierOperations.rootPath, veafCarrierOperations.help)
-    end
+    veafRadio.addCommandToSubmenu("HELP", veafCarrierOperations.rootPath, veafCarrierOperations.help, true)
 
     -- find the carriers and add them to the veafCarrierOperations.carriers table, store its initial location and create the menus
     for name, group in pairs(mist.DBs.groupsByName) do

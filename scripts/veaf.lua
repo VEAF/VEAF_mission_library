@@ -43,13 +43,9 @@ veaf.Debug = veaf.Development
 --- Enable logTrace ==> give even more output to DCS log file.
 veaf.Trace = veaf.Development
 
-veaf.RadioMenuName = "VEAF"
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Do not change anything below unless you know what you are doing!
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-veaf.radioMenuPath = nil
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Utility methods
@@ -468,16 +464,6 @@ function veaf.findUnitsInCircle(center, radius)
         end
     end
     return result
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Radio menu methods
--------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Build the initial radio menu
-function veaf.buildRadioMenu()
-    veaf.radioMenuPath = missionCommands.addSubMenu(veaf.RadioMenuName)
-    missionCommands.addCommand('Visit us at http://www.veaf.org', veaf.radioMenuPath, veaf.emptyFunction)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
