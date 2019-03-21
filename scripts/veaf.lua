@@ -473,8 +473,6 @@ end
 -- initialize the random number generator to make it almost random
 math.random(); math.random(); math.random()
 
-veaf.buildRadioMenu()
-
 --- Enable/Disable error boxes displayed on screen.
 env.setErrorMessageBoxEnabled(false)
 

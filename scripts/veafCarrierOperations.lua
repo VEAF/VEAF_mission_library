@@ -66,9 +66,6 @@ veafCarrierOperations.AllCarriers =
 --- Radio menus paths
 veafCarrierOperations.rootPath = nil
 
--- Humans Groups (associative array groupId => group)
-veafCarrierOperations.humanGroups = {}
-
 --- Carrier groups data, for Carrier Operations commands
 veafCarrierOperations.carriers = {}
 
@@ -275,41 +272,39 @@ function veafCarrierOperations.rebuildRadioMenu()
         -- remove the start menu
         if carrier.startMenuName then
             veafCarrierOperations.logTrace("remove carrier.startMenuName="..carrier.startMenuName)
-            veafRadio.delCommand((veafCarrierOperations.rootPath, carrier.startMenuName)
+            veafRadio.delCommand(veafCarrierOperations.rootPath, carrier.startMenuName)
         end
 
         -- remove the stop menu
         if carrier.stopMenuName then
             veafCarrierOperations.logTrace("remove carrier.stopMenuName="..carrier.stopMenuName)
-            veafRadio.delCommand((veafCarrierOperations.rootPath, carrier.stopMenuName)
+            veafRadio.delCommand(veafCarrierOperations.rootPath, carrier.stopMenuName)
         end
 
         -- remove the ATC menu (by player group)
         if carrier.getInfoMenuName then
             veafCarrierOperations.logTrace("remove carrier.getInfoMenuName="..carrier.getInfoMenuName)
-            veafRadio.delCommand((veafCarrierOperations.rootPath, carrier.getInfoMenuName)
+            veafRadio.delCommand(veafCarrierOperations.rootPath, carrier.getInfoMenuName)
         end
 
         if carrier.conductingAirOperations then
             -- add the stop menu
             carrier.stopMenuName = name .. " - End air operations"
             veafCarrierOperations.logTrace("add carrier.stopMenuName="..carrier.stopMenuName)
-            veafRadio.addCommandToSubmenu(title,radioMenu,method,isForGroup)
-            -- MARKER TODO DPI KILROY WAS HERE
+            veafRadio.addCommandToSubmenu(carrier.stopMenuName, veafCarrierOperations.rootPath, veafCarrierOperations.stopCarrierOperations, name)
         else
             -- add the start menu
             carrier.startMenuName = name .. " - Start carrier air operations"
             veafCarrierOperations.logTrace("add carrier.startMenuName="..carrier.startMenuName)
-            missionCommands.addCommand(carrier.startMenuName, veafCarrierOperations.rootPath, veafCarrierOperations.startCarrierOperations, name)
+            veafRadio.addCommandToSubmenu(carrier.startMenuName, veafCarrierOperations.rootPath, veafCarrierOperations.startCarrierOperations, name)
         end
 
         -- add the ATC menu (by player group)
         carrier.getInfoMenuName = name .. " - ATC - Request informations"
         veafCarrierOperations.logTrace("add carrier.getInfoMenuName="..carrier.getInfoMenuName)
-        for groupId, group in pairs(veafCarrierOperations.humanGroups) do
-            missionCommands.addCommandForGroup(groupId, carrier.getInfoMenuName, veafCarrierOperations.rootPath, veafCarrierOperations.getAtcForCarrierOperations, {name, groupId})
-        end
+        veafRadio.addCommandToSubmenu(carrier.getInfoMenuName, veafCarrierOperations.rootPath, veafCarrierOperations.getAtcForCarrierOperations, name, true)
 
+        veafRadio.refreshRadioMenu()
     end
 end
 
@@ -366,30 +361,13 @@ function veafCarrierOperations.help()
     trigger.action.outText(text, 30)
 end
 
--- prepare humans groups
-function veafCarrierOperations.buildHumanGroups() -- TODO make this player-centric, not group-centric
-
-    veafCarrierOperations.humanGroups = {}
-
-    -- build menu for each player
-    for name, unit in pairs(mist.DBs.humansByName) do
-        -- not already in groups list ?
-        if veafCarrierOperations.humanGroups[unit.groupName] == nil then
-            veafCarrierOperations.logTrace(string.format("human player found name=%s, groupName=%s", name, unit.groupName))
-            veafCarrierOperations.humanGroups[unit.groupId] = unit.groupName
-        end
-    end
-end
-
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- initialisation
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function veafCarrierOperations.initialize()
-    veafCarrierOperations.buildHumanGroups()
     veafCarrierOperations.buildRadioMenu()
-    --veafMarkers.registerEventHandler(veafMarkers.MarkerChange, veafCarrierOperations.onEventMarkChange)
 end
 
 veafCarrierOperations.logInfo(string.format("Loading version %s", veafCarrierOperations.Version))

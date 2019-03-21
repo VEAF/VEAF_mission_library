@@ -132,9 +132,6 @@ veafTransportMission.targetMarkersPath = nil
 veafTransportMission.targetInfoPath = nil
 veafTransportMission.rootPath = nil
 
--- Humans Groups (associative array groupId => group)
-veafTransportMission.humanGroups = {}
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Utility methods
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -455,21 +452,20 @@ function veafTransportMission.generateTransportMission(targetSpot, size, defense
         veafTransportMission.logDebug("Done generating blocade")
     end
 
-    -- build menu for each player
-    for groupId, group in pairs(veafTransportMission.humanGroups) do
-        -- add radio menu for target information (by player group)
-        missionCommands.addCommandForGroup(groupId, 'Drop zone information', veafTransportMission.rootPath, veafTransportMission.reportTargetInformation, groupId)
-    end
+    -- add radio menu for drop zone information (by player group)
+    veafRadio.addCommandToSubmenu('Drop zone information', veafTransportMission.rootPath, veafTransportMission.reportTargetInformation, nil, true)
 
     -- add radio menus for commands
-    missionCommands.addCommand('Skip current objective', veafTransportMission.rootPath, veafTransportMission.skip)
-    veafTransportMission.targetMarkersPath = missionCommands.addSubMenu("Drop zone markers", veafTransportMission.rootPath)
-    missionCommands.addCommand('Request smoke on drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.smokeTarget)
-    missionCommands.addCommand('Request illumination flare over drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.flareTarget)
+    veafRadio.addCommandToSubmenu('Skip current objective', veafTransportMission.rootPath, veafTransportMission.skip)
+    veafTransportMission.targetMarkersPath = veafRadio.addSubMenu("Drop zone markers", veafTransportMission.rootPath)
+    veafRadio.addCommandToSubmenu('Request smoke on drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.smokeTarget)
+    veafRadio.addCommandToSubmenu('Request illumination flare over drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.flareTarget)
 
     local message = "See F10 radio menu for details\n" -- TODO
     trigger.action.outText(message,5)
-
+    
+    veafRadio.refreshRadioMenu()
+    
     -- start checking for targets destruction
     veafTransportMission.friendlyGroupWatchdog()
 end
@@ -538,17 +534,19 @@ function veafTransportMission.smokeTarget()
     veafTransportMission.logDebug("smokeTarget()")
     veafSpawn.spawnSmoke(veaf.getAveragePosition(veafTransportMission.BlueGroupName), trigger.smokeColor.Green)
 	trigger.action.outText('Copy smoke requested, GREEN smoke marks the drop zone!',5)
-    missionCommands.removeItem({veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Drop zone markers', 'Request smoke on drop zone'})
-    missionCommands.addCommand('Drop zone is marked with GREEN smoke', veafTransportMission.targetMarkersPath, veaf.emptyFunction)
+    veafRadio.delCommand(veafTransportMission.targetMarkersPath, 'Request smoke on drop zone')
+    veafRadio.addCommandToSubmenu('Drop zone is marked with GREEN smoke', veafTransportMission.targetMarkersPath, veaf.emptyFunction)
     veafTransportMission.smokeResetTaskID = mist.scheduleFunction(veafTransportMission.smokeReset,{},timer.getTime()+veafTransportMission.SecondsBetweenSmokeRequests)
+    veafRadio.refreshRadioMenu()
 end
 
 --- Reset the smoke request radio menu
 function veafTransportMission.smokeReset()
     veafTransportMission.logDebug("smokeReset()")
-    missionCommands.removeItem({veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Drop zone markers', 'Drop zone is marked with GREEN smoke'})
-    missionCommands.addCommand('Request smoke on drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.smokeTarget)
+    veafRadio.delCommand(veafTransportMission.targetMarkersPath, 'Drop zone is marked with GREEN smoke')
+    veafRadio.addCommandToSubmenu('Request smoke on drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.smokeTarget)
     trigger.action.outText('Smoke marker over drop zone available',5)
+    veafRadio.refreshRadioMenu()
 end
 
 --- add an illumination flare over the target area
@@ -556,17 +554,19 @@ function veafTransportMission.flareTarget()
     veafTransportMission.logDebug("flareTarget()")
     veafSpawn.spawnIlluminationFlare(veaf.getAveragePosition(veafTransportMission.BlueGroupName))
 	trigger.action.outText('Copy illumination flare requested, illumination flare over target area!',5)
-	missionCommands.removeItem({veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Drop zone markers', 'Request illumination flare over drop zone'})
-	missionCommands.addCommand('Drop zone is lit with illumination flare', veafTransportMission.targetMarkersPath, veaf.emptyFunction)
+    veafRadio.delCommand(veafTransportMission.targetMarkersPath, 'Request illumination flare over drop zone')
+    veafRadio.addCommandToSubmenu('Drop zone is lit with illumination flare', veafTransportMission.targetMarkersPath, veaf.emptyFunction)
     veafTransportMission.flareResetTaskID = mist.scheduleFunction(veafTransportMission.flareReset,{},timer.getTime()+veafTransportMission.SecondsBetweenFlareRequests)
+    veafRadio.refreshRadioMenu()
 end
 
 --- Reset the flare request radio menu
 function veafTransportMission.flareReset()
     veafTransportMission.logDebug("flareReset()")
-    missionCommands.removeItem({veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Drop zone markers', 'Drop zone is lit with illumination flare'})
-    missionCommands.addCommand('Request illumination flare over drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.flareTarget)
+    veafRadio.delCommand(veafTransportMission.targetMarkersPath, 'Drop zone is lit with illumination flare')
+    veafRadio.addCommandToSubmenu('Request illumination flare over drop zone', veafTransportMission.targetMarkersPath, veafTransportMission.flareTarget)
     trigger.action.outText('Illumination flare over drop zone available',5)
+    veafRadio.refreshRadioMenu()
 end
 
 
@@ -633,16 +633,12 @@ function veafTransportMission.cleanupAfterMission()
     end
     veafTransportMission.friendlyGroupAdfLoopTaskID = 'none'
 
-            -- build menu for each player
-    for name, player in pairs(mist.DBs.humansByName) do
-        -- update the radio menu
-        missionCommands.removeItemForGroup(player.groupId, {veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Drop zone information'})
-    end
+    veafRadio.delCommand(veafTransportMission.rootPath, 'Skip current objective')
+    veafRadio.delCommand(veafTransportMission.rootPath, 'Get current objective situation')
+    veafRadio.delCommand(veafTransportMission.rootPath, 'Drop zone markers')
+    veafRadio.delSubmenu(veafTransportMission.rootPath, veafTransportMission.targetMarkersPath)
 
-    missionCommands.removeItem({veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Skip current objective'})
-    missionCommands.removeItem({veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Get current objective situation'})
-    missionCommands.removeItem({veaf.RadioMenuName, veafTransportMission.RadioMenuName, 'Drop zone markers'})
-
+    veafRadio.refreshRadioMenu()
     veafTransportMission.logTrace("cleanupAfterMission DONE")
 
 end
@@ -654,22 +650,13 @@ end
 --- Build the initial radio menu
 function veafTransportMission.buildRadioMenu()
 
-    veafTransportMission.rootPath = missionCommands.addSubMenu(veafTransportMission.RadioMenuName, veaf.radioMenuPath)
-
-    -- build menu for each group
-    for groupId, group in pairs(veafTransportMission.humanGroups) do
-        missionCommands.addCommandForGroup(groupId, "HELP", veafTransportMission.rootPath, veafTransportMission.help)
-    end
-
+    veafTransportMission.rootPath = veafRadio.addSubMenu(veafTransportMission.RadioMenuName)
+    veafRadio.addCommandToSubmenu("HELP", veafTransportMission.rootPath, veafTransportMission.help, nil, true)
     -- TODO add this command when the respawn will work (see veafTransportMission.resetAllCargoes)
     -- missionCommands.addCommand('Respawn all cargoes', veafTransportMission.rootPath, veafTransportMission.resetAllCargoes)
-
 end
 
---      add ", defense [1-5]" to specify air defense cover on the way (1 = light, 5 = heavy)
---      add ", size [1-5]" to change the number of cargo items to be transported (1 per participating helo, usually)
---      add ", blocade [1-5]" to specify enemy blocade around the drop zone (1 = light, 5 = heavy)
-function veafTransportMission.help()
+function veafTransportMission.help(groupId)
     local text =
         'Create a marker and type "veaf transport mission" in the text\n' ..
         'This will create a default friendly group awaiting cargo that you need to transport\n' ..
@@ -682,28 +669,10 @@ function veafTransportMission.help()
         '        defense = 5 : 3-7 soldiers, BMP-1 IFV, big chance of Igla-S manpad, chance of ZSU-23-4 Shilka\n' ..
         '   "size [1-5]" to change the number of cargo items to be transported (1 per participating helo, usually)\n' ..
         '   "sblocade [0-5]" to specify enemy blocade around the drop zone (1 = light, 5 = heavy)'
---- defenseLevel = 3 : 3-7 soldiers, chance of BMP-1 IFV, chance of Igla manpad
---- defenseLevel = 4 : 3-7 soldiers, big chance of BMP-1 IFV, big chance of Igla-S manpad, chance of ZU-23 on a truck
---- defenseLevel = 5 : 3-7 soldiers, BMP-1 IFV, big chance of Igla-S manpad, chance of ZSU-23-4 Shilka
 
-    trigger.action.outText(text, 30)
+    trigger.action.outTextForGroup(groupId, text, 30)
 end
 
-
--- prepare humans groups
-function veafTransportMission.buildHumanGroups()
-
-    veafTransportMission.humanGroups = {}
-
-    -- build menu for each player
-    for name, unit in pairs(mist.DBs.humansByName) do
-        -- not already in groups list ?
-        if veafTransportMission.humanGroups[unit.groupName] == nil then
-            veafTransportMission.logTrace(string.format("human player found name=%s, unit=%s", name, unit.groupName))
-            veafTransportMission.humanGroups[unit.groupId] = unit.groupName
-        end
-    end
-end
 
 function veafTransportMission.endTransportOfCargo(cargoName)
     local text = 
@@ -738,7 +707,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function veafTransportMission.initialize()
-    veafTransportMission.buildHumanGroups()
     veafTransportMission.buildRadioMenu()
     veafMarkers.registerEventHandler(veafMarkers.MarkerChange, veafTransportMission.onEventMarkChange)
 end
