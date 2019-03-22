@@ -54,9 +54,6 @@ veafNamedPoints.namedPoints = {}
 
 veafNamedPoints.rootPath = nil
 
--- Humans Groups (associative array groupId => group)
-veafNamedPoints.humanGroups = {}
-
 --- Initial Marker id.
 veafNamedPoints.markid=1270000
 
@@ -224,28 +221,12 @@ function veafNamedPoints.help(groupId)
 end
 
 
--- prepare humans groups
-function veafNamedPoints.buildHumanGroups()
-
-    veafNamedPoints.humanGroups = {}
-
-    -- build menu for each player
-    for name, unit in pairs(mist.DBs.humansByName) do
-        -- not already in groups list ?
-        if veafNamedPoints.humanGroups[unit.groupName] == nil then
-            veafNamedPoints.logTrace(string.format("human player found name=%s, unit=%s", name, unit.groupName))
-            veafNamedPoints.humanGroups[unit.groupId] = unit.groupName
-        end
-    end
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- initialisation
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function veafNamedPoints.initialize()
     veafNamedPoints.buildPointsDatabase()
-    veafNamedPoints.buildHumanGroups()
     veafNamedPoints.buildRadioMenu()
     veafMarkers.registerEventHandler(veafMarkers.MarkerChange, veafNamedPoints.onEventMarkChange)
 end
