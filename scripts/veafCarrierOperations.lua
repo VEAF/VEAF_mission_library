@@ -45,7 +45,7 @@ veafCarrierOperations = {}
 veafCarrierOperations.Id = "CARRIER - "
 
 --- Version.
-veafCarrierOperations.Version = "1.1.2"
+veafCarrierOperations.Version = "1.1.3"
 
 --- All the carrier groups must comply with this name
 veafCarrierOperations.CarrierGroupNamePattern = "^CSG-.*$"
@@ -119,7 +119,7 @@ function veafCarrierOperations.startCarrierOperations(groupName)
 
     -- take note of the starting position
     local startPosition = veaf.getAvgGroupPos(groupName)
-    startPosition = { x=startPosition.x, z=startPosition.z, y=startPosition.y+1} -- one meter above the water
+    startPosition = { x=startPosition.x, z=startPosition.z, y=startPosition.y+25} -- on deck, 25 meters above the water
     veafCarrierOperations.logTrace("startPosition="..veaf.vecToString(startPosition))
 
     -- make the carrier move
@@ -141,7 +141,7 @@ function veafCarrierOperations.startCarrierOperations(groupName)
             dir = dir - 180
         end
 
-        dir = dir + carrier.deckAngle --to account for angle of landing deck and movement of the ship
+        dir = dir - carrier.deckAngle --to account for angle of landing deck and movement of the ship
         
         if dir > 360 then
             dir = dir - 360
@@ -158,11 +158,14 @@ function veafCarrierOperations.startCarrierOperations(groupName)
         -- compute a new waypoint
         if speed > 0 then
 
-            veaf.moveGroupAt(groupName, carrier.carrierUnitName, dir, speed, 1800, carrier.initialPosition) -- move for 30 minutes
+            veaf.moveGroupAt(groupName, carrier.carrierUnitName, dir, speed, 1800, carrier.initialPosition, 1000) -- move for 30 minutes with a temp point 1000m from here
             carrier.heading = dir
             carrier.speed = veaf.round(speed * 1.94384, 0)
 
-            local text = "The carrier group "..groupName.." is moving to heading " .. carrier.heading .. ", sailing at " .. carrier.speed .. " kn"
+            local text = 
+                "The carrier group "..groupName.." BRC will be " .. carrier.heading .. " (true) at " .. carrier.speed .. " kn \n" ..
+                "First it will sail ahead flank to a starting point located roughly on BRC for 1000 m\n" ..
+                "This will allow for a better final alignment and will require about 5 minutes\n"
 
             veafCarrierOperations.logInfo(text)
             trigger.action.outText(text, 5)
@@ -184,6 +187,15 @@ function veafCarrierOperations.getAtcForCarrierOperations(parameters)
     veafCarrierOperations.logDebug("getAtcForCarrierOperations(".. groupName .. ")")
 
     local carrier = veafCarrierOperations.carriers[groupName]
+    local carrierUnit = Unit.getByName(carrier.carrierUnitName)
+    currentHeading = -1
+    currentSpeed = -1
+    if carrierUnit then 
+        currentHeading = mist.utils.round(mist.utils.toDegree(mist.getHeading(carrierUnit)), 0)
+        veafCarrierOperations.logTrace("currentHeading ".. currentHeading)
+        currentSpeed = mist.utils.round(mist.utils.mpsToKnots(mist.vec.mag(carrierUnit:getVelocity())),0)
+        veafCarrierOperations.logTrace("currentSpeed ".. currentSpeed)
+    end
 
     if not(carrier) then
         local text = "Cannot find the carrier group "..groupName
@@ -196,10 +208,15 @@ function veafCarrierOperations.getAtcForCarrierOperations(parameters)
     
     if carrier.conductingAirOperations then
         result = "The carrier group "..groupName.." is conducting air operations :\n" ..
-        "  - Base Recovery Course " .. carrier.heading .. "\n" ..
-        "  - Speed " .. carrier.speed .. " kn"
+        "  - Base Recovery Course " .. carrier.heading .. " (true)\n"
     else
-        result = "The carrier group "..groupName.." is not conducting carrier air operations"
+        result = "The carrier group "..groupName.." is not conducting carrier air operations\n"
+    end
+
+    if currentHeading > -1 and currentSpeed > -1 then
+        result = result ..
+        "  - Current heading " .. currentHeading .. " (mag)\n" ..
+        "  - Speed " .. currentSpeed .. " kn"
     end
 
     -- add wind information

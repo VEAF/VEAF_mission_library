@@ -431,7 +431,7 @@ function veafSpawn.doSpawnGroup(spawnSpot, groupDefinition, country, speed, alt,
     end
 
     if speed > 0 then
-        veaf.moveGroupAt(groupName, hdg, speed)
+        veaf.moveGroupAt(groupName, hdg, speed) -- TODO check if this still works (no leadUnitName parameter)
     end
 
     if not(silent) then
@@ -559,7 +559,7 @@ function veafSpawn.spawnUnit(spawnPosition, name, country, speed, alt, hdg, unit
     end
 
     if speed > 0 then
-        veaf.moveGroupAt(groupName, hdg, speed)
+        veaf.moveGroupAt(groupName, hdg, speed) -- TODO check if this still works (no leadUnitName parameter)
     end
 
     -- message the unit spawning
