@@ -742,8 +742,7 @@ function veafSpawn.buildRadioMenu()
     veafRadio.addCommandToSubmenu("HELP", veafSpawn.rootPath, veafSpawn.help, nil, true)
     veafRadio.addCommandToSubmenu("HELP - all units", veafSpawn.rootPath, veafSpawn.helpAllUnits, nil, true)
     veafRadio.addCommandToSubmenu("HELP - all groups", veafSpawn.rootPath, veafSpawn.helpAllGroups, nil, true)
-    -- TODO see if it's safe to add this back after radio menu refactoring
-    --veafRadio.addCommandToSubmenu("HELP - all cargoes", veafSpawn.rootPath, veafSpawn.helpAllCargoes, nil, true)
+    veafRadio.addCommandToSubmenu("HELP - all cargoes", veafSpawn.rootPath, veafSpawn.helpAllCargoes, nil, true)
     veafRadio.refreshRadioMenu()
 end
 

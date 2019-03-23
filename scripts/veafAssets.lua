@@ -24,16 +24,17 @@ veafAssets = {}
 veafAssets.Id = "ASSETS - "
 
 --- Version.
-veafAssets.Version = "1.0.1"
+veafAssets.Version = "1.0.2"
 
 veafAssets.Assets = {
-    {name="T1-Arco", description="Arco (KC-135), 6Y, 138.2"}, 
-    {name="T2-Shell", description="Shell (KC-135 MPRS), 14Y, 134.7"}, 
-    {name="T3-Texaco", description="Texaco (KC-135 MPRS),12Y, 132.5"}, 
-    {name="A1-Overlord", description="Overlord (E-2D) - 251"}, 
-    {name="Meet Mig-29", description="RED Mig-29 (dogfight zone)" },
-    {name="Meet Mig-29*2", description="RED Mig-29x2 (dogfight zone)"},
-    {name="Meet Mig-21", description="RED Mig-21 (dogfight zone)"},
+    {name="T1-Arco", description="Arco (KC-135)", information="Tacan 6Y\nVHF 138.2 Mhz"}, 
+    {name="T2-Shell", description="Shell (KC-135 MPRS)", information="Tacan 14Y\nVHF 134.7 Mhz"},  
+    {name="T3-Texaco", description="Texaco (KC-135 MPRS)", information="Tacan 12Y\nVHF 132.5 Mhz"},  
+    {name="A1-Overlord", description="Overlord (E-2D)", information="UHF 251 Mhz"},  
+    {name="Meet Mig-21", description="RED Mig-21 (dogfight zone)", disposable=true, information="They spawn near N41° 09' 31\" E043° 05' 08\""},
+    {name="Meet Mig-29", description="RED Mig-29 (dogfight zone)", disposable=true, information="They spawn near N41° 09' 31\" E043° 05' 08\"" },
+    {name="Meet Mig-29*2", description="RED Mig-29x2 (dogfight zone)", disposable=true, information="They spawn near N41° 09' 31\" E043° 05' 08\""},
+    {name="Meet Mig-29*4", description="RED Mig-29x4 (dogfight zone)", disposable=true, information="They spawn near N41° 09' 31\" E043° 05' 08\""},
 }
 
 veafAssets.RadioMenuName = "ASSETS (" .. veafAssets.Version .. ")"
@@ -69,14 +70,80 @@ function veafAssets.buildRadioMenu()
     veafAssets.rootPath = veafRadio.addSubMenu(veafAssets.RadioMenuName)
     veafRadio.addCommandToSubmenu("HELP", veafAssets.rootPath, veafAssets.help, nil, true)
     for _, asset in pairs(veafAssets.Assets) do
-        veafRadio.addCommandToSubmenu("Respawn "..asset.description, veafAssets.rootPath, veafAssets.respawn, asset.name, false)
+        if asset.disposable or asset.information then -- in this case we need a submenu
+            local radioMenu = veafRadio.addSubMenu(asset.description, veafAssets.rootPath)
+            veafRadio.addCommandToSubmenu("Respawn "..asset.description, radioMenu, veafAssets.respawn, asset.name, false)
+            if asset.information then
+                veafRadio.addCommandToSubmenu("Get info on "..asset.description, radioMenu, veafAssets.info, asset.name, true)
+            end
+            if asset.disposable then
+                veafRadio.addCommandToSubmenu("Dispose of "..asset.description, radioMenu, veafAssets.dispose, asset.name, false)
+            end
+        else
+            veafRadio.addCommandToSubmenu("Respawn "..asset.description, veafAssets.rootPath, veafAssets.respawn, asset.name, false)
+        end
     end
     
     veafRadio.refreshRadioMenu()
 end
 
+function veafAssets.info(parameters)
+    local name, groupId = unpack(parameters)
+    veafAssets.logDebug("veafAssets.info "..name)
+    local theAsset = nil
+    for _, asset in pairs(veafAssets.Assets) do
+        if asset.name == name then
+            theAsset = asset
+        end
+    end
+    if theAsset then
+        local group = Group.getByName(theAsset.name)
+        local text = theAsset.description .. " is not active nor alive"
+        if group then
+            local nAlive = 0
+            for _, unit in pairs(group:getUnits()) do
+                if unit:getLife() > 0 then
+                    nAlive = nAlive + 1
+                end
+            end
+            if nAlive > 0 then
+                if nAlive == 1 then
+                    text = string.format("%s is active ; one unit is alive\n", theAsset.description)
+                else
+                    text = string.format("%s is active ; %d units are alive\n", theAsset.description, nAlive)
+                end
+                if theAsset.information then
+                    text = text .. theAsset.information
+                end
+            end
+        end 
+        trigger.action.outTextForGroup(groupId, text, 30)
+    end
+end
+
+function veafAssets.dispose(name)
+    veafAssets.logDebug("veafAssets.dispose "..name)
+    local theAsset = nil
+    for _, asset in pairs(veafAssets.Assets) do
+        if asset.name == name then
+            theAsset = asset
+        end
+    end
+    if theAsset then
+        veafAssets.logDebug("veafSpawn.destroy "..theAsset.name)
+        local group = Group.getByName(theAsset.name)
+        if group then
+            for _, unit in pairs(group:getUnits()) do
+                Unit.destroy(unit)
+            end
+        end
+        local text = "I've disposed of " .. theAsset.description
+        trigger.action.outText(text, 30)
+    end
+end
+
 function veafAssets.respawn(name)
-    veafAssets.logInfo("veafAssets.respawn "..name)
+    veafAssets.logDebug("veafAssets.respawn "..name)
     local theAsset = nil
     for _, asset in pairs(veafAssets.Assets) do
         if asset.name == name then
