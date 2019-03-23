@@ -72,7 +72,7 @@ veafCasMission = {}
 veafCasMission.Id = "CAS MISSION - "
 
 --- Version.
-veafCasMission.Version = "1.1.2"
+veafCasMission.Version = "1.1.3"
 
 --- Key phrase to look for in the mark text which triggers the command.
 veafCasMission.Keyphrase = "veaf cas "

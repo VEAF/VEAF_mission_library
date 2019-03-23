@@ -45,7 +45,7 @@ veafRadio = {}
 veafRadio.Id = "RADIO - "
 
 --- Version.
-veafRadio.Version = "1.0.1"
+veafRadio.Version = "1.0.2"
 
 veafRadio.RadioMenuName = "VEAF (" .. veaf.Version .. " - radio " .. veafRadio.Version .. ")"
 
@@ -285,7 +285,6 @@ end
 
 function veafRadio.initialize()
     -- Build the initial radio menu
-    veafRadio.addCommandToMainMenu('Visit us at http://www.veaf.org', veaf.emptyFunction)
     veafRadio.buildHumanGroups()
     veafRadio.refreshRadioMenu()
     --veafRadio.radioRefreshWatchdog()

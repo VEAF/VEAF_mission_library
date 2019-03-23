@@ -70,7 +70,7 @@ veafMove = {}
 veafMove.Id = "MOVE - "
 
 --- Version.
-veafMove.Version = "1.0.0"
+veafMove.Version = "1.0.1"
 
 --- Key phrase to look for in the mark text which triggers the weather report.
 veafMove.Keyphrase = "veaf move "
