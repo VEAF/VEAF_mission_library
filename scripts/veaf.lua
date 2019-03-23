@@ -256,7 +256,7 @@ function veaf.addUnit(group, spawnSpot, dispersion, unitType, unitName, skill)
 end
 
 --- Makes a group move to a waypoint set at a specific heading and at a distance covered at a specific speed in an hour
-function veaf.moveGroupAt(groupName, leadUnitName, heading, speed, timeInSeconds, endPosition)
+function veaf.moveGroupAt(groupName, leadUnitName, heading, speed, timeInSeconds, endPosition, pMiddlePointDistance)
     veaf.logDebug("veaf.moveGroupAt(groupName=" .. groupName .. ", heading="..heading.. ", speed=".. speed..", timeInSeconds="..(timeInSeconds or 0))
 
     local unitGroup = Group.getByName(groupName)
@@ -279,10 +279,15 @@ function veaf.moveGroupAt(groupName, leadUnitName, heading, speed, timeInSeconds
     local fromPosition = leadUnit:getPosition().p
     veaf.logTrace("fromPosition="..veaf.vecToString(fromPosition))
 
-    -- new route point
+    -- middle point (helps with having a more exact final bearing, specially with big hunks of steel like carriers)
+    local middlePointDistance = 2000
+    if pMiddlePointDistance then
+        middlePointDistance = pMiddlePointDistance
+    end
+
 	local newWaypoint1 = {
-		x = fromPosition.x + 2000 * math.cos(headingRad),
-		y = fromPosition.z + 2000 * math.sin(headingRad),
+		x = fromPosition.x + middlePointDistance * math.cos(headingRad),
+		y = fromPosition.z + middlePointDistance * math.sin(headingRad),
 	}
     veaf.logTrace("newWaypoint1="..veaf.vecToString(newWaypoint1))
 
