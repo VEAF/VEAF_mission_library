@@ -389,11 +389,12 @@ end
 
 --- Build the initial radio menu
 function veafMove.buildRadioMenu()
-    veafMove.rootPath = missionCommands.addSubMenu(veafMove.RadioMenuName, veaf.radioMenuPath)
-    missionCommands.addCommand("HELP", veafMove.rootPath, veafMove.help)
+    veafMove.rootPath = veafRadio.addSubMenu(veafMove.RadioMenuName)
+    veafRadio.addCommandToSubmenu("HELP", veafMove.rootPath, veafMove.help, nil, true)
+    veafRadio.refreshRadioMenu()
 end
 
-function veafMove.help()
+function veafMove.help(groupId)
     local text = 
         'Create a marker and type "veaf move <group|tanker>, name <groupname> " in the text\n' ..
         'This will issue a move command to the specified group in the DCS world\n' ..
@@ -404,7 +405,7 @@ function veafMove.help()
         '     add ", hdg [heading]" to specify the refuel leg heading (from the marker point, in degrees)\n' ..
         '     add ", dist [distance]" to specify the refuel leg length (from the marker point, in nautical miles)\n' ..
         '     add ", alt [altitude]" to specify the refuel leg altitude (in feet)'
-    trigger.action.outText(text, 30)
+    trigger.action.outTextForGroup(groupId, text, 30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------

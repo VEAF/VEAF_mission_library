@@ -54,9 +54,6 @@ veafNamedPoints.namedPoints = {}
 
 veafNamedPoints.rootPath = nil
 
--- Humans Groups (associative array groupId => group)
-veafNamedPoints.humanGroups = {}
-
 --- Initial Marker id.
 veafNamedPoints.markid=1270000
 
@@ -207,43 +204,22 @@ end
 
 --- Build the initial radio menu
 function veafNamedPoints.buildRadioMenu()
-
-    veafNamedPoints.rootPath = missionCommands.addSubMenu(veafNamedPoints.RadioMenuName, veaf.radioMenuPath)
-
-    -- build menu for each group
-    for groupId, group in pairs(veafNamedPoints.humanGroups) do
-        missionCommands.addCommandForGroup(groupId, "HELP", veafNamedPoints.rootPath, veafNamedPoints.help)
-        missionCommands.addCommandForGroup(groupId, "List all points", veafNamedPoints.rootPath, veafNamedPoints.listAllPoints, groupId)
-    end
-
+    veafNamedPoints.rootPath = veafRadio.addSubMenu(veafNamedPoints.RadioMenuName)
+    veafRadio.addCommandToSubmenu("HELP", veafNamedPoints.rootPath, veafNamedPoints.help, nil, true)
+    veafRadio.addCommandToSubmenu("List all points", veafNamedPoints.rootPath, veafNamedPoints.listAllPoints, nil, true)
+    veafRadio.refreshRadioMenu()
 end
 
 --      add ", defense [1-5]" to specify air defense cover on the way (1 = light, 5 = heavy)
 --      add ", size [1-5]" to change the number of cargo items to be transported (1 per participating helo, usually)
 --      add ", blocade [1-5]" to specify enemy blocade around the drop zone (1 = light, 5 = heavy)
-function veafNamedPoints.help()
+function veafNamedPoints.help(groupId)
     local text =
         'Create a marker and type "veaf name point, name [a name]" in the text\n' ..
         'This will store the position in the named points database for later reference\n'
-
-    trigger.action.outText(text, 30)
+    trigger.action.outTextForGroup(groupId, text, 30)
 end
 
-
--- prepare humans groups
-function veafNamedPoints.buildHumanGroups()
-
-    veafNamedPoints.humanGroups = {}
-
-    -- build menu for each player
-    for name, unit in pairs(mist.DBs.humansByName) do
-        -- not already in groups list ?
-        if veafNamedPoints.humanGroups[unit.groupName] == nil then
-            veafNamedPoints.logTrace(string.format("human player found name=%s, unit=%s", name, unit.groupName))
-            veafNamedPoints.humanGroups[unit.groupId] = unit.groupName
-        end
-    end
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- initialisation
@@ -251,7 +227,6 @@ end
 
 function veafNamedPoints.initialize()
     veafNamedPoints.buildPointsDatabase()
-    veafNamedPoints.buildHumanGroups()
     veafNamedPoints.buildRadioMenu()
     veafMarkers.registerEventHandler(veafMarkers.MarkerChange, veafNamedPoints.onEventMarkChange)
 end

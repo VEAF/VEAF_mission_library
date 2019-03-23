@@ -738,14 +738,16 @@ end
 
 --- Build the initial radio menu
 function veafSpawn.buildRadioMenu()
-    veafSpawn.rootPath = missionCommands.addSubMenu(veafSpawn.RadioMenuName, veaf.radioMenuPath)
-    missionCommands.addCommand("HELP", veafSpawn.rootPath, veafSpawn.help)
-    missionCommands.addCommand("HELP - all units", veafSpawn.rootPath, veafSpawn.helpAllUnits)
-    missionCommands.addCommand("HELP - all groups", veafSpawn.rootPath, veafSpawn.helpAllGroups)
-    --missionCommands.addCommand("HELP - all cargoes", veafSpawn.rootPath, veafSpawn.helpAllCargoes)
+    veafSpawn.rootPath = veafRadio.addSubMenu(veafSpawn.RadioMenuName)
+    veafRadio.addCommandToSubmenu("HELP", veafSpawn.rootPath, veafSpawn.help, nil, true)
+    veafRadio.addCommandToSubmenu("HELP - all units", veafSpawn.rootPath, veafSpawn.helpAllUnits, nil, true)
+    veafRadio.addCommandToSubmenu("HELP - all groups", veafSpawn.rootPath, veafSpawn.helpAllGroups, nil, true)
+    -- TODO see if it's safe to add this back after radio menu refactoring
+    --veafRadio.addCommandToSubmenu("HELP - all cargoes", veafSpawn.rootPath, veafSpawn.helpAllCargoes, nil, true)
+    veafRadio.refreshRadioMenu()
 end
 
-function veafSpawn.help()
+function veafSpawn.help(groupId)
     local text = 
         'Create a marker and type "veaf spawn <unit|group|smoke|flare> " in the text\n' ..
         'This will spawn the requested object in the DCS world\n' ..
@@ -772,10 +774,10 @@ function veafSpawn.help()
         '"veaf spawn flare" lights things up with a flare\n' ..
         '   "alt <altitude in meters agl>" specifies the initial altitude'
             
-    trigger.action.outText(text, 30)
+    trigger.action.outTextForGroup(groupId, text, 30)
 end
 
-function veafSpawn.helpAllGroups()
+function veafSpawn.helpAllGroups(groupId)
     local text = 'List of all groups defined in dcsUnits :\n'
             
     for _, g in pairs(veafUnits.GroupsDatabase) do
@@ -786,10 +788,10 @@ function veafSpawn.helpAllGroups()
         end
         text = text .. "\n"
     end
-    trigger.action.outText(text, 30)
+    trigger.action.outTextForGroup(groupId, text, 30)
 end
 
-function veafSpawn.helpAllUnits()
+function veafSpawn.helpAllUnits(groupId)
     local text = 'List of all units defined in dcsUnits :\n'
             
     for _, u in pairs(veafUnits.UnitsDatabase) do
@@ -800,10 +802,10 @@ function veafSpawn.helpAllUnits()
         end
         text = text .. "\n"
     end
-    trigger.action.outText(text, 30)
+    trigger.action.outTextForGroup(groupId, text, 30)
 end
 
-function veafSpawn.helpAllCargoes()
+function veafSpawn.helpAllCargoes(groupId)
     local text = 'List of all cargoes defined in dcsUnits :\n'
             
     for name, unit in pairs(dcsUnits.DcsUnitsDatabase) do
@@ -817,7 +819,7 @@ function veafSpawn.helpAllCargoes()
             text = text .."\n"
         end
     end
-    trigger.action.outText(text, 30)
+    trigger.action.outTextForGroup(groupId, text, 30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
