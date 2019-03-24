@@ -45,7 +45,7 @@ veafRadio = {}
 veafRadio.Id = "RADIO - "
 
 --- Version.
-veafRadio.Version = "1.0.2"
+veafRadio.Version = "1.0.3"
 
 veafRadio.RadioMenuName = "VEAF (" .. veaf.Version .. " - radio " .. veafRadio.Version .. ")"
 
@@ -236,9 +236,13 @@ function veafRadio.addSubMenu(title, radioMenu)
     return subMenu
 end
 
-function veafRadio.delSubmenu(parentMenu, subMenu)
-  for count = 1,#parentMenu.subMenus do
-    local menu = parentMenu.subMenus[count]
+function veafRadio.delSubmenu(subMenu, radioMenu)
+  local menu = veafRadio.radioMenu
+  if radioMenu then
+     menu = radioMenu 
+  end
+  for count = 1,#menu.subMenus do
+    local menu = menu.subMenus[count]
     local found = false
     if type(subMenu) == "string" then
       found = menu.title == subMenu
@@ -246,7 +250,7 @@ function veafRadio.delSubmenu(parentMenu, subMenu)
       found = menu == subMenu
     end
     if found then
-      table.remove(parentMenu.subMenus, count)
+      table.remove(menu.subMenus, count)
       return true
     end
   end

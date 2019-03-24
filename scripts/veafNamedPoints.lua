@@ -1,5 +1,5 @@
--------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- VEAF name point command and functions for DCS World
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- By zip (2018)
 --
 -- Features:
@@ -37,12 +37,25 @@ veafNamedPoints = {}
 veafNamedPoints.Id = "NAMED POINTS - "
 
 --- Version.
-veafNamedPoints.Version = "1.0.0"
+veafNamedPoints.Version = "1.0.1"
 
 --- Key phrase to look for in the mark text which triggers the command.
 veafNamedPoints.Keyphrase = "veaf name "
 
-veafNamedPoints.Points = {{name="KASPI",point={x=-290955,y=0,z=847525}}, {name="TBILISI",point={x=-315414,y=480,z=897262}}}
+veafNamedPoints.Points = {
+    -- airbases
+    {name="AIRBASE Tbilisi",point={x=-315414,y=480,z=897262}},
+    {name="AIRBASE Sukhumi",point={x=-219998,y=0,z=563926}},
+    {name="AIRBASE Batumi",point={x=-355808,y=0,z=617385}},
+    -- farps
+    {name="FARP Java",point={x=-247450,y=0,z=799583}},
+    {name="FARP Lentehi",point={x=-214442,y=0,z=695610}},
+    {name="FARP Aibgha",point={x=-146615,y=0,z=486334}},
+    {name="FARP Rista",point={x=-151631,y=0,z=518384}},
+    {name="FARP Kaspi",point={x=-290955,y=0,z=847525}}, 
+    -- points of interest
+    {name="RANGE Kobuleti",point={x=-328289,y=0,z=631228}},
+}
 
 veafNamedPoints.RadioMenuName = "NAMED POINTS (" .. veafNamedPoints.Version .. ")"
 
@@ -53,6 +66,7 @@ veafNamedPoints.RadioMenuName = "NAMED POINTS (" .. veafNamedPoints.Version .. "
 veafNamedPoints.namedPoints = {}
 
 veafNamedPoints.rootPath = nil
+veafNamedPoints.weatherPath = nil
 
 --- Initial Marker id.
 veafNamedPoints.markid=1270000
@@ -160,11 +174,17 @@ function veafNamedPoints.namePoint(targetSpot, name, coalition)
 
 end
 
-function veafNamedPoints.addPoint(name, point)
+function veafNamedPoints._addPoint(name, point)
     veafNamedPoints.logTrace(string.format("addPoint(name = %s)",name))
     veafNamedPoints.logTrace("point=" .. veaf.vecToString(point))
 
     veafNamedPoints.namedPoints[name:upper()] = point
+end
+
+function veafNamedPoints.addPoint(name, point)
+    veafNamedPoints.logTrace(string.format("addPoint: {name=\"%s\",point={x=%d,y=0,z=%d}}", name, point.x, point.z))
+    veafNamedPoints._addPoint(name, point)
+    veafNamedPoints._refreshWeatherReportsRadioMenu()
 end
 
 function veafNamedPoints.delPoint(name)
@@ -179,10 +199,21 @@ function veafNamedPoints.getPoint(name)
     return veafNamedPoints.namedPoints[name:upper()]
 end
 
+function veafNamedPoints.getWeatherAtPoint(parameters)
+    local name, groupId = unpack(parameters)
+    veafNamedPoints.logTrace(string.format("getWeatherAtPoint(name = %s)",name))
+    local point = veafNamedPoints.getPoint(name)
+    if point then
+        local altitude = veaf.getLandHeight(point)
+        local weatherReport = weathermark._WeatherReport(point, altitude, "imperial")
+        trigger.action.outTextForGroup(groupId, weatherReport, 30)
+    end
+end
+
 function veafNamedPoints.buildPointsDatabase()
     veafNamedPoints.namedPoints = {}
     for name, defaultPoint in pairs(veafNamedPoints.Points) do
-        veafNamedPoints.addPoint(defaultPoint.name, defaultPoint.point)
+        veafNamedPoints._addPoint(defaultPoint.name, defaultPoint.point)
     end
 end
 
@@ -202,12 +233,52 @@ end
 -- Radio menu and help
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+function veafNamedPoints._buildWeatherReportsRadioMenuPage(menu, names, pageSize, startIndex)
+    veafNamedPoints.logDebug(string.format("veafNamedPoints._buildWeatherReportsRadioMenuPage(pageSize=%d, startIndex=%d)",pageSize, startIndex))
+    
+    local namesCount = #names
+    veafNamedPoints.logTrace(string.format("namesCount = %d",namesCount))
+
+    local endIndex = namesCount
+    if endIndex - startIndex >= pageSize then
+        endIndex = startIndex + pageSize - 2
+    end
+    veafNamedPoints.logTrace(string.format("endIndex = %d",endIndex))
+    veafNamedPoints.logDebug(string.format("adding commands from %d to %d",startIndex, endIndex))
+    for index = startIndex, endIndex do
+        local name = names[index]
+        veafNamedPoints.logTrace(string.format("names[%d] = %s",index, name))
+        local namedPoint = veafNamedPoints.namedPoints[name]
+        veafRadio.addCommandToSubmenu( name , menu, veafNamedPoints.getWeatherAtPoint, name, true)    
+    end
+    if endIndex < namesCount then
+        veafNamedPoints.logDebug("adding next page menu")
+        local nextPageMenu = veafRadio.addSubMenu("Next page", menu)
+        veafNamedPoints._buildWeatherReportsRadioMenuPage(nextPageMenu, names, 10, endIndex+1)
+    end
+end
+
+--- refresh the Weather Reports radio menu
+function veafNamedPoints._refreshWeatherReportsRadioMenu()
+    if veafNamedPoints.weatherPath then
+        veafRadio.delSubmenu(veafNamedPoints.weatherPath, veafNamedPoints.rootPath)
+    end
+    veafNamedPoints.weatherPath = veafRadio.addSubMenu("Get weather report over a point", veafNamedPoints.rootPath)
+    names = {}
+    for name, point in pairs(veafNamedPoints.namedPoints) do
+        table.insert(names, name)
+    end
+    table.sort(names)
+    veafNamedPoints._buildWeatherReportsRadioMenuPage(veafNamedPoints.weatherPath, names, 10, 1)
+    veafRadio.refreshRadioMenu()
+end
+
 --- Build the initial radio menu
 function veafNamedPoints.buildRadioMenu()
     veafNamedPoints.rootPath = veafRadio.addSubMenu(veafNamedPoints.RadioMenuName)
     veafRadio.addCommandToSubmenu("HELP", veafNamedPoints.rootPath, veafNamedPoints.help, nil, true)
     veafRadio.addCommandToSubmenu("List all points", veafNamedPoints.rootPath, veafNamedPoints.listAllPoints, nil, true)
-    veafRadio.refreshRadioMenu()
+    veafNamedPoints._refreshWeatherReportsRadioMenu()
 end
 
 --      add ", defense [1-5]" to specify air defense cover on the way (1 = light, 5 = heavy)

@@ -636,7 +636,7 @@ function veafTransportMission.cleanupAfterMission()
     veafRadio.delCommand(veafTransportMission.rootPath, 'Skip current objective')
     veafRadio.delCommand(veafTransportMission.rootPath, 'Get current objective situation')
     veafRadio.delCommand(veafTransportMission.rootPath, 'Drop zone markers')
-    veafRadio.delSubmenu(veafTransportMission.rootPath, veafTransportMission.targetMarkersPath)
+    veafRadio.delSubmenu(veafTransportMission.targetMarkersPath, veafTransportMission.rootPath)
 
     veafRadio.refreshRadioMenu()
     veafTransportMission.logTrace("cleanupAfterMission DONE")

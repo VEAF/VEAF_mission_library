@@ -795,7 +795,7 @@ function veafCasMission.cleanupAfterMission()
     veafCasMission.logTrace("update the radio menu 3")
     veafRadio.delCommand(veafCasMission.rootPath, 'Get current objective situation')
     veafCasMission.logTrace("update the radio menu 4")
-    veafRadio.delSubmenu(veafCasMission.rootPath, veafCasMission.targetMarkersPath)
+    veafRadio.delSubmenu(veafCasMission.targetMarkersPath, veafCasMission.rootPath)
 
     veafRadio.refreshRadioMenu()
     veafCasMission.logTrace("skipCasTarget DONE")

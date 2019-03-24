@@ -6,7 +6,7 @@
         {
             "label": "Build Test mission",
             "type": "shell",
-            "command": "./build_fr.cmd",
+            "command": "./build_zip.cmd",
             "options": {
                 "cwd": "${workspaceRoot}\\..\\VEAF-Test-Mission"
             },
@@ -19,7 +19,7 @@
         {
             "label": "Build OpenTraining mission",
             "type": "shell",
-            "command": "./build_fr.cmd",
+            "command": "./build_zip.cmd",
             "options": {
                 "cwd": "${workspaceRoot}\\..\\VEAF-Open-Training-Mission"
             }

@@ -329,7 +329,7 @@ end
 function veafCarrierOperations.buildRadioMenu()
     veafCarrierOperations.logDebug("veafCarrierOperations.buildRadioMenu")
 
-    veafCarrierOperations.rootPath = veafRadio.addMenu(veafCarrierOperations.RadioMenuName)
+    veafCarrierOperations.rootPath = veafRadio.addSubMenu(veafCarrierOperations.RadioMenuName)
 
     -- build HELP menu for each group
     veafRadio.addCommandToSubmenu("HELP", veafCarrierOperations.rootPath, veafCarrierOperations.help, true)

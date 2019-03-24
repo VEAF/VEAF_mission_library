@@ -77,7 +77,7 @@ function test2()
   veaf.logInfo(test2)
 end
 
-local casRadioMenu = veafRadio.addMenu("VEAF CAS MISSION")
+local casRadioMenu = veafRadio.addSubMenu("VEAF CAS MISSION")
 veafRadio.addCommandToSubmenu("HELP",casRadioMenu,veaf.emptyFunction)
 local cas_Markers_RadioMenu = veafRadio.addSubMenu("Markers",casRadioMenu)
 veafRadio.addCommandToSubmenu("Smoke",cas_Markers_RadioMenu,veaf.emptyFunction)
