@@ -168,7 +168,7 @@ function veafCarrierOperations.startCarrierOperations(groupName)
                 "This will allow for a better final alignment and will require about 5 minutes\n"
 
             veafCarrierOperations.logInfo(text)
-            trigger.action.outText(text, 5)
+            trigger.action.outText(text, 25)
     
             carrier.conductingAirOperations = true
 
