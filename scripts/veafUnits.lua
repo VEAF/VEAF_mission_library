@@ -39,7 +39,7 @@ veafUnits = {}
 veafUnits.Id = "UNITS - "
 
 --- Version.
-veafUnits.Version = "1.2.1"
+veafUnits.Version = "1.3.0"
 
 --- If no unit is spawned in a cell, it will default to this width
 veafUnits.DefaultCellWidth = 10
@@ -768,8 +768,150 @@ veafUnits.GroupsDatabase = {
             groupName = "US infantry group",
         },
     },
+    {
+        aliases = {"US supply convoy","blueconvoy"},
+        group = {
+            disposition = { h = 1, w = 50},
+            units = {
+                {"IFV Hummer", number = {min=2, max=4}, random},
+                {"Truck M 818", number = {min=3, max=6}, random},
+                {"Truck M978 HEMTT Tanker", number = {min=0, max=3}, random},
+                {"Truck Predator GCS", number = {min=0, max=2}, random},
+                {"Truck Predator TrojanSpirit", number = {min=0, max=2}, random},
+            },
+            description = "US infantry group",
+            groupName = "US infantry group",
+        },
+    },
+    {
+        aliases = {"RU supply convoy with defense","redconvoy-def"},
+        group = {
+            disposition = { h = 1, w = 50},
+            units = {
+                {"2S6 Tunguska", number = {min=0, max=1}, random},
+                {"Strela-10M3", number = {min=0, max=1}, random},
+                {"Strela-1 9P31", number = {min=0, max=1}, random},
+                {"ZSU-23-4 Shilka", number = {min=0, max=2}, random},
+                {"Ural-375 ZU-23", number = {min=0, max=2}, random},
+                {"UAZ-469", number = {min=2, max=4}, random},
+                {"Truck SKP-11", number = {min=1, max=3}, random},
+                {"Truck Ural-375 PBU", number = {min=1, max=3}, random},
+                {"Truck Ural-375", number = {min=1, max=3}, random},
+                {"Truck Ural-4320 APA-5D", number = {min=1, max=3}, random},
+                {"Truck Ural-4320-31", number = {min=1, max=3}, random},
+                {"Truck Ural-4320T", number = {min=1, max=3}, random},
+                {"Truck ZiL-131 APA-80", number = {min=1, max=3}, random},
+                {"Truck ZIL-131 KUNG", number = {min=1, max=3}, random},
+            },
+            description = "RU supply convoy with defense",
+            groupName = "RU supply convoy with defense",
+        },
+    },
+    {
+        aliases = {"RU supply convoy with light defense","redconvoy-lightdef"},
+        group = {
+            disposition = { h = 1, w = 50},
+            units = {
+                {"ZSU-23-4 Shilka", number = {min=0, max=2}, random},
+                {"Ural-375 ZU-23", number = {min=0, max=2}, random},
+                {"UAZ-469", number = {min=2, max=4}, random},
+                {"Truck SKP-11", number = {min=1, max=3}, random},
+                {"Truck Ural-375 PBU", number = {min=1, max=3}, random},
+                {"Truck Ural-375", number = {min=1, max=3}, random},
+                {"Truck Ural-4320 APA-5D", number = {min=1, max=3}, random},
+                {"Truck Ural-4320-31", number = {min=1, max=3}, random},
+                {"Truck Ural-4320T", number = {min=1, max=3}, random},
+                {"Truck ZiL-131 APA-80", number = {min=1, max=3}, random},
+                {"Truck ZIL-131 KUNG", number = {min=1, max=3}, random},
+            },
+            description = "RU supply convoy with light defense",
+            groupName = "RU supply convoy with light defense",
+        },
+    },
+    {
+        aliases = {"RU supply convoy with no defense","redconvoy-nodef"},
+        group = {
+            disposition = { h = 1, w = 50},
+            units = {
+                {"UAZ-469", number = {min=2, max=4}, random},
+                {"Truck SKP-11", number = {min=1, max=3}, random},
+                {"Truck Ural-375 PBU", number = {min=1, max=3}, random},
+                {"Truck Ural-375", number = {min=1, max=3}, random},
+                {"Truck Ural-4320 APA-5D", number = {min=1, max=3}, random},
+                {"Truck Ural-4320-31", number = {min=1, max=3}, random},
+                {"Truck Ural-4320T", number = {min=1, max=3}, random},
+                {"Truck ZiL-131 APA-80", number = {min=1, max=3}, random},
+                {"Truck ZIL-131 KUNG", number = {min=1, max=3}, random},
+            },
+            description = "RU supply convoy with no defense",
+            groupName = "RU supply convoy with no defense",
+        },
+    },
 
-
+    {
+        aliases = {"RU small supply convoy with defense","redsmallconvoy-def"},
+        group = {
+            disposition = { h = 1, w = 50},
+            units = {
+                {"2S6 Tunguska", number = {min=0, max=1}, random},
+                {"Strela-10M3", number = {min=0, max=1}, random},
+                {"Strela-1 9P31", number = {min=0, max=1}, random},
+                {"ZSU-23-4 Shilka", number = {min=0, max=2}, random},
+                {"Ural-375 ZU-23", number = {min=0, max=2}, random},
+                {"UAZ-469", number = {min=1, max=2}, random},
+                {"Truck SKP-11", number = {min=1, max=2}, random},
+                {"Truck Ural-375 PBU", number = {min=0, max=2}, random},
+                {"Truck Ural-375", number = {min=0, max=2}, random},
+                {"Truck Ural-4320 APA-5D", number = {min=0, max=2}, random},
+                {"Truck Ural-4320-31", number = {min=0, max=2}, random},
+                {"Truck Ural-4320T", number = {min=0, max=2}, random},
+                {"Truck ZiL-131 APA-80", number = {min=0, max=2}, random},
+                {"Truck ZIL-131 KUNG", number = {min=0, max=2}, random},
+            },
+            description = "RU small supply convoy with defense",
+            groupName = "RU small supply convoy with defense",
+        },
+    },
+    {
+        aliases = {"RU small supply convoy with light defense","redsmallconvoy-lightdef"},
+        group = {
+            disposition = { h = 1, w = 50},
+            units = {
+                {"ZSU-23-4 Shilka", number = {min=0, max=2}, random},
+                {"Ural-375 ZU-23", number = {min=0, max=2}, random},
+                {"UAZ-469", number = {min=1, max=2}, random},
+                {"Truck SKP-11", number = {min=1, max=2}, random},
+                {"Truck Ural-375 PBU", number = {min=0, max=2}, random},
+                {"Truck Ural-375", number = {min=0, max=2}, random},
+                {"Truck Ural-4320 APA-5D", number = {min=0, max=2}, random},
+                {"Truck Ural-4320-31", number = {min=0, max=2}, random},
+                {"Truck Ural-4320T", number = {min=0, max=2}, random},
+                {"Truck ZiL-131 APA-80", number = {min=0, max=2}, random},
+                {"Truck ZIL-131 KUNG", number = {min=0, max=2}, random},
+            },
+            description = "RU small supply convoy with light defense",
+            groupName = "RU small supply convoy with light defense",
+        },
+    },
+    {
+        aliases = {"RU small supply convoy with no defense","redsmallconvoy-nodef","redconvoy","convoy"},
+        group = {
+            disposition = { h = 1, w = 50},
+            units = {
+                {"UAZ-469", number = {min=1, max=2}, random},
+                {"Truck SKP-11", number = {min=1, max=2}, random},
+                {"Truck Ural-375 PBU", number = {min=0, max=2}, random},
+                {"Truck Ural-375", number = {min=0, max=2}, random},
+                {"Truck Ural-4320 APA-5D", number = {min=0, max=2}, random},
+                {"Truck Ural-4320-31", number = {min=0, max=2}, random},
+                {"Truck Ural-4320T", number = {min=0, max=2}, random},
+                {"Truck ZiL-131 APA-80", number = {min=0, max=2}, random},
+                {"Truck ZIL-131 KUNG", number = {min=0, max=2}, random},
+            },
+            description = "RU small supply convoy with no defense",
+            groupName = "RU small supply convoy with no defense",
+        },
+    },
 }
 
 veafUnits.logInfo(string.format("Loading version %s", veafUnits.Version))
