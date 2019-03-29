@@ -33,7 +33,7 @@ veaf = {}
 veaf.Id = "VEAF - "
 
 --- Version.
-veaf.Version = "1.1.2"
+veaf.Version = "1.2.0"
 
 --- Development version ?
 veaf.Development = true
@@ -105,6 +105,15 @@ end
 function veaf.round(num, numDecimalPlaces)
   local mult = 10^(numDecimalPlaces or 0)
   return math.floor(num * mult + 0.5) / mult
+end
+
+--- shuffle a table elements around
+function veaf.shuffle(tbl)
+    for i = #tbl, 2, -1 do
+      local j = math.random(i)
+      tbl[i], tbl[j] = tbl[j], tbl[i]
+    end
+    return tbl
 end
 
 --- Return the height of the land at the coordinate.
@@ -234,6 +243,85 @@ function veaf.findPointInZone(spawnSpot, dispersion, isShip)
         return unitPosition
     end
 end
+
+--- TODO doc
+function veaf.generateVehiclesRoute(startPoint, destination, onRoad)
+    veaf.logTrace(string.format("startPoint = {x = %d, y = %d, z = %d}", startPoint.x, startPoint.y, startPoint.z))
+    local routeChoice = "Off Road"
+    if onRoad then
+        routeChoice = "On Road"
+    end
+
+    local endPoint = veafNamedPoints.getPoint(destination)
+    if not(endPoint) then
+        trigger.action.outText("A point named "..destination.." cannot be found !", 5)
+        return
+    end
+    veaf.logTrace(string.format("endPoint = {x = %d, y = %d, z = %d}", endPoint.x, endPoint.y, endPoint.z))
+
+    local road_x, road_z = land.getClosestPointOnRoads('roads',startPoint.x, startPoint.z)
+    startPoint = veaf.placePointOnLand({x = road_x, y = 0, z = road_z})
+    veaf.logTrace(string.format("startPoint = {x = %d, y = %d, z = %d}", startPoint.x, startPoint.y, startPoint.z))
+
+    road_x, road_z =land.getClosestPointOnRoads('roads',endPoint.x, endPoint.z)
+    endPoint = veaf.placePointOnLand({x = road_x, y = 0, z = road_z})
+    veaf.logTrace(string.format("endPoint = {x = %d, y = %d, z = %d}", endPoint.x, endPoint.y, endPoint.z))
+    
+    local vehiclesRoute = {
+        [1] = 
+        {
+            ["x"] = startPoint.x,
+            ["y"] = startPoint.z,
+            ["alt"] = startPoint.y,
+            ["type"] = "Turning Point",
+            ["ETA"] = 0,
+            ["alt_type"] = "BARO",
+            ["formation_template"] = "",
+            ["name"] = "STA",
+            ["ETA_locked"] = true,
+            ["speed"] = 10,
+            ["action"] = routeChoice,
+            ["task"] = 
+            {
+                ["id"] = "ComboTask",
+                ["params"] = 
+                {
+                    ["tasks"] = 
+                    {
+                    }, -- end of ["tasks"]
+                }, -- end of ["params"]
+            }, -- end of ["task"]
+            ["speed_locked"] = true,
+        }, -- end of [1]
+        [2] = 
+        {
+            ["x"] = endPoint.x,
+            ["y"] = endPoint.z,
+            ["alt"] = endPoint.y,
+            ["type"] = "Turning Point",
+            ["ETA"] = 164.7057218182,
+            ["alt_type"] = "BARO",
+            ["formation_template"] = "",
+            ["name"] = "END",
+            ["ETA_locked"] = false,
+            ["speed"] = 10,
+            ["action"] = routeChoice,
+            ["task"] = 
+            {
+                ["id"] = "ComboTask",
+                ["params"] = 
+                {
+                    ["tasks"] = 
+                    {
+                    }, -- end of ["tasks"]
+                }, -- end of ["params"]
+            }, -- end of ["task"]
+            ["speed_locked"] = true,
+        }, -- end of [2]
+    }
+    return vehiclesRoute
+end
+
 
 --- Add a unit to the <group> on a suitable point in a <dispersion>-sized circle around a spot
 function veaf.addUnit(group, spawnSpot, dispersion, unitType, unitName, skill)

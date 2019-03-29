@@ -72,7 +72,7 @@ veafCasMission = {}
 veafCasMission.Id = "CAS MISSION - "
 
 --- Version.
-veafCasMission.Version = "1.1.3"
+veafCasMission.Version = "1.2.0"
 
 --- Key phrase to look for in the mark text which triggers the command.
 veafCasMission.Keyphrase = "veaf cas "
@@ -300,21 +300,23 @@ function veafCasMission.generateAirDefenseGroup(groupId, defense)
 end
 
 --- Generates a transport company and its air defenses
-function veafCasMission.generateTransportCompany(groupId, defense)
+function veafCasMission.generateTransportCompany(groupId, defense, groupSize)
     local name = "Red CAS Group Transport Company #"..groupId
+    if not groupSize then
+        groupSize = 6
+    end
     local group = {
-            disposition = { h = 6, w = 1},
+            disposition = { h = groupSize+10, w = 1},
             units = {},
             description = name,
             groupName = name,
         }
 
     -- generate a transport company
-    local groupCount = math.random(2, 5)
     local transportType
     local transportRand
   
-    for _ = 1, groupCount do
+    for _ = 1, groupSize do
         transportRand = math.random(8)
         if transportRand == 1 then
             transportType = 'ATMZ-5'
@@ -336,13 +338,27 @@ function veafCasMission.generateTransportCompany(groupId, defense)
         table.insert(group.units, { transportType, random})
     end
 
-    -- add an air defense vehicle
-    if defense > 2 then
-        -- defense = 3-5 : add a Shilka
-        table.insert(group.units, { "ZSU-23-4 Shilka", cell = 3, random })
-    elseif defense > 0 then
-        -- defense = 1 : add a ZU23 on a truck
-        table.insert(group.units, { "Ural-375 ZU-23", cell = 3, random })
+    -- add an air defense vehicle every 10 vehicles
+    local nbDefense = groupSize / 10 + 1
+    if nbDefense == 0 then
+        nbDefense = 1
+    end
+    veafCasMission.logDebug("nbDefense = " .. nbDefense)
+    for _ = 1, nbDefense do
+        if defense > 3 then
+            -- defense = 4-5 : add a Tunguska and a Shilka
+            table.insert(group.units, { "ZSU-23-4 Shilka", random })
+            table.insert(group.units, { "2S6 Tunguska", random })
+        elseif defense > 2 then
+            -- defense = 3 : add a Tunguska
+            table.insert(group.units, { "2S6 Tunguska", random })
+        elseif defense > 1 then
+            -- defense = 2 : add a Shilka
+            table.insert(group.units, { "ZSU-23-4 Shilka", random })
+        elseif defense > 0 then
+            -- defense = 1 : add a ZU23 on a truck
+            table.insert(group.units, { "Ural-375 ZU-23", random })
+        end
     end
 
     return group
@@ -583,7 +599,9 @@ function veafCasMission.generateCasMission(spawnSpot, size, defense, armor, spac
         local groupPosition = veaf.findPointInZone(spawnSpot, zoneRadius, false)
         if groupPosition ~= nil then
                 groupPosition = { x = groupPosition.x, z = groupPosition.y }
-            local group = veafCasMission.generateTransportCompany(groupId, defense)
+
+            local groupCount = math.random(2, 5)
+            local group = veafCasMission.generateTransportCompany(groupId, defense, groupCount)
             
             -- process the group 
             local group = veafUnits.processGroup(group)
